@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -30,6 +31,14 @@ public class ManejadorGlobalErrores {
 
     public ManejadorGlobalErrores(FabricaErrores fabricaErrores) {
         this.fabricaErrores = fabricaErrores;
+    }
+
+    /** 429 con Retry-After: el front puede decir "intenta de nuevo en N segundos". */
+    @ExceptionHandler(LimiteExcedidoException.class)
+    public ResponseEntity<ErrorRespuesta> manejarLimite(LimiteExcedidoException ex) {
+        return ResponseEntity.status(ex.getEstado())
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getSegundosEspera()))
+                .body(fabricaErrores.crear(ex.getEstado(), ex.getMessage()));
     }
 
     @ExceptionHandler(ExcepcionApi.class)

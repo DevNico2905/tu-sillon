@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.devsenior.sillon.compartido.limite.FiltroLimite;
 
 /** Reglas de acceso: exactamente la tabla de roles y permisos de la SPEC. */
 @Configuration
@@ -24,10 +25,13 @@ public class ConfiguracionSeguridad {
 
     private final FiltroJwt filtroJwt;
     private final EscritorErroresSeguridad escritorErrores;
+    private final FiltroLimite filtroLimite;
 
-    public ConfiguracionSeguridad(FiltroJwt filtroJwt, EscritorErroresSeguridad escritorErrores) {
+    public ConfiguracionSeguridad(FiltroJwt filtroJwt, EscritorErroresSeguridad escritorErrores,
+                                  FiltroLimite filtroLimite) {
         this.filtroJwt = filtroJwt;
         this.escritorErrores = escritorErrores;
+        this.filtroLimite = filtroLimite;
     }
 
     @Bean
@@ -67,7 +71,9 @@ public class ConfiguracionSeguridad {
                         .requestMatchers("/api/pagos/**").hasRole(DUENO)
                         .requestMatchers("/api/solicitudes", "/api/solicitudes/**").hasRole(DUENO)
                         .anyRequest().authenticated())
-                .addFilterBefore(filtroJwt, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(filtroJwt, UsernamePasswordAuthenticationFilter.class)
+                // El límite va antes que el JWT: frena el abuso sin gastar BCrypt ni consultas
+                .addFilterBefore(filtroLimite, FiltroJwt.class);
         return http.build();
     }
 
