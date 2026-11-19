@@ -21,7 +21,13 @@ public class JwtService {
     private final Clock clock;
 
     public JwtService(JwtProperties propiedades, Clock clock) {
-        byte[] bytes = propiedades.secreto().getBytes(StandardCharsets.UTF_8);
+        String secreto = propiedades.secreto();
+        // @ConfigurationProperties deja "${JWT_SECRETO}" literal si la variable no existe: se rechaza
+        if (secreto == null || secreto.isBlank() || secreto.contains("${")) {
+            throw new IllegalStateException(
+                    "Falta JWT_SECRETO (variable de entorno, o sillon.jwt.secreto en secrets.properties)");
+        }
+        byte[] bytes = secreto.getBytes(StandardCharsets.UTF_8);
         if (bytes.length < 32) {
             throw new IllegalStateException("sillon.jwt.secreto debe tener al menos 32 caracteres");
         }
