@@ -3,6 +3,7 @@ package com.devsenior.sillon.auth.service;
 import com.devsenior.sillon.auth.dto.AuthResponse;
 import com.devsenior.sillon.auth.dto.LoginRequest;
 import com.devsenior.sillon.auth.dto.RegistroRequest;
+import com.devsenior.sillon.auth.dto.SesionIniciada;
 import com.devsenior.sillon.compartido.config.NegocioProperties;
 import com.devsenior.sillon.compartido.excepcion.CredencialesInvalidasException;
 import com.devsenior.sillon.compartido.excepcion.ReglaNegocioException;
@@ -32,21 +33,24 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final NegocioProperties negocio;
+    private final SesionService sesionService;
 
     public AuthService(SalonRepository salonRepository, UsuarioRepository usuarioRepository,
                        GeneradorSlug generadorSlug, PasswordEncoder passwordEncoder,
-                       JwtService jwtService, NegocioProperties negocio) {
+                       JwtService jwtService, NegocioProperties negocio,
+                       SesionService sesionService) {
         this.salonRepository = salonRepository;
         this.usuarioRepository = usuarioRepository;
         this.generadorSlug = generadorSlug;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.negocio = negocio;
+        this.sesionService = sesionService;
     }
 
     /** Crea el salón (GRATIS, créditos de cortesía, horario por defecto) y su dueño en una sola transacción. */
     @Transactional
-    public AuthResponse registrar(RegistroRequest request) {
+    public SesionIniciada registrar(RegistroRequest request) {
         String email = normalizarCorreo(request.email());
         if (usuarioRepository.existsByEmail(email)) {
             throw new ReglaNegocioException("Ya existe una cuenta con ese correo");
@@ -72,21 +76,40 @@ public class AuthService {
         dueno.setSalon(salon);
         usuarioRepository.save(dueno);
 
-        return respuesta(dueno, salon);
+        return iniciar(dueno, salon);
     }
 
-    /** 401 con un mensaje genérico: no revela si falló el correo o la contraseña. */
-    @Transactional(readOnly = true)
-    public AuthResponse login(LoginRequest request) {
+    /**
+     * 401 con un mensaje genérico: no revela si falló el correo o la contraseña.
+     * Ya no es readOnly: el login guarda la nueva sesión de refresco.
+     */
+    @Transactional
+    public SesionIniciada login(LoginRequest request) {
         Usuario usuario = usuarioRepository.findByEmail(normalizarCorreo(request.email()))
                 .filter(Usuario::isActivo)
                 .filter(u -> passwordEncoder.matches(request.password(), u.getPassword()))
                 .orElseThrow(() -> new CredencialesInvalidasException(MENSAJE_CREDENCIALES));
-        return respuesta(usuario, usuario.getSalon());
+        return iniciar(usuario, usuario.getSalon());
+    }
+
+    /** Rota el refresh token de la cookie y entrega un access token nuevo. */
+    public SesionIniciada refrescar(String refresco) {
+        SesionService.Rotacion rotacion = sesionService.rotar(refresco);
+        Usuario usuario = rotacion.usuario();
+        return new SesionIniciada(respuesta(usuario, usuario.getSalon()), rotacion.nuevoValor());
+    }
+
+    /** Cierra la sesión de este dispositivo. */
+    public void cerrarSesion(String refresco) {
+        sesionService.revocar(refresco);
     }
 
     public static String normalizarCorreo(String email) {
         return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private SesionIniciada iniciar(Usuario usuario, Salon salon) {
+        return new SesionIniciada(respuesta(usuario, salon), sesionService.emitir(usuario));
     }
 
     private AuthResponse respuesta(Usuario usuario, Salon salon) {
