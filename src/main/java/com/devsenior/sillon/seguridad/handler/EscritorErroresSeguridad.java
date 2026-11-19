@@ -41,7 +41,8 @@ public class EscritorErroresSeguridad implements AuthenticationEntryPoint, Acces
         escribir(response, HttpStatus.FORBIDDEN, "Su rol no tiene permiso para esta acción");
     }
 
-    private void escribir(HttpServletResponse response, HttpStatus estado, String mensaje) throws IOException {
+    /** También lo usa FiltroLimite para el 429. */
+    public void escribir(HttpServletResponse response, HttpStatus estado, String mensaje) throws IOException {
         response.setStatus(estado.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());

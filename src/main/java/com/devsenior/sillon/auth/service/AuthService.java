@@ -7,6 +7,8 @@ import com.devsenior.sillon.auth.dto.SesionIniciada;
 import com.devsenior.sillon.compartido.config.NegocioProperties;
 import com.devsenior.sillon.compartido.excepcion.CredencialesInvalidasException;
 import com.devsenior.sillon.compartido.excepcion.ReglaNegocioException;
+import com.devsenior.sillon.compartido.limite.Limitador;
+import com.devsenior.sillon.compartido.limite.ReglaLimite;
 import com.devsenior.sillon.salon.model.ConfiguracionSalon;
 import com.devsenior.sillon.salon.model.Plan;
 import com.devsenior.sillon.salon.model.Salon;
@@ -34,11 +36,12 @@ public class AuthService {
     private final JwtService jwtService;
     private final NegocioProperties negocio;
     private final SesionService sesionService;
+    private final Limitador limitador;
 
     public AuthService(SalonRepository salonRepository, UsuarioRepository usuarioRepository,
                        GeneradorSlug generadorSlug, PasswordEncoder passwordEncoder,
                        JwtService jwtService, NegocioProperties negocio,
-                       SesionService sesionService) {
+                       SesionService sesionService, Limitador limitador) {
         this.salonRepository = salonRepository;
         this.usuarioRepository = usuarioRepository;
         this.generadorSlug = generadorSlug;
@@ -46,6 +49,7 @@ public class AuthService {
         this.jwtService = jwtService;
         this.negocio = negocio;
         this.sesionService = sesionService;
+        this.limitador = limitador;
     }
 
     /** Crea el salón (GRATIS, créditos de cortesía, horario por defecto) y su dueño en una sola transacción. */
@@ -85,7 +89,10 @@ public class AuthService {
      */
     @Transactional
     public SesionIniciada login(LoginRequest request) {
-        Usuario usuario = usuarioRepository.findByEmail(normalizarCorreo(request.email()))
+        String email = normalizarCorreo(request.email());
+        // Antes de BCrypt: 10 intentos cada 15 min por cuenta, vengan de la IP que vengan
+        limitador.consumir(ReglaLimite.LOGIN_CORREO, email);
+        Usuario usuario = usuarioRepository.findByEmail(email)
                 .filter(Usuario::isActivo)
                 .filter(u -> passwordEncoder.matches(request.password(), u.getPassword()))
                 .orElseThrow(() -> new CredencialesInvalidasException(MENSAJE_CREDENCIALES));
