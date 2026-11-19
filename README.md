@@ -123,5 +123,6 @@ Solo los nombres; los valores viven en Render, nunca en el repositorio.
 | `STRIPE_SECRETO_WEBHOOK` | Secreto del destino de webhook de producción |
 | `GEMINI_LLAVE` | Llave de Gemini |
 | `SPRING_PROFILES_ACTIVE` | `prod` (apaga Swagger y exige todas las variables) |
+| `CORS_ORIGENES` | Origen(es) del front, separados por coma (ej: `https://app.midominio.com`) |
 
 `STRIPE_URL_API` y `SILLON_IA_OPENAI_URL` no se configuran en Render: sus valores por defecto apuntan a Stripe y a Gemini reales. Existen para que el calificador use sus simuladores.# tu-sillon-web
