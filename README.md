@@ -101,6 +101,8 @@ Cada ejecución usa un sufijo con la hora y calcula sus propias fechas: se puede
 | POST | `/api/pagos/webhook` | Stripe (firma `Stripe-Signature`) |
 | GET | `/api/pagos/resultado?estado=` | Público |
 | GET | `/api/admin/salones` | ADMIN |
+| POST | `/api/auth/refresh` | Público (cookie) | Renueva el access token con la cookie httpOnly |
+| POST | `/api/auth/logout` | Público (cookie) | Cierra la sesión de este dispositivo |
 
 Todos los errores responden con el mismo formato: `codigo`, `error`, `mensaje`, `fecha`.
 
