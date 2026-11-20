@@ -10,7 +10,7 @@ COPY src ./src
 RUN mvn -B -DskipTests package
 
 # Etapa 2: solo el JRE y el .jar, imagen más liviana
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:25-jre
 
 # Usuario sin privilegios: si alguien compromete la app, no es root dentro del contenedor
 RUN groupadd --system --gid 10001 sillon \
