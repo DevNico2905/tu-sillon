@@ -22,8 +22,4 @@ secrets.properties
 ### IDE y macOS ###
 .DS_Store
 .idea/
-AGENTS.md
 BITACORA-IA.md
-CLAUDE.md
-.claude/
-SPEC.md
