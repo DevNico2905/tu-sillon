@@ -21,7 +21,7 @@ Agenda inteligente para barberías y salones de belleza: un SaaS multi-inquilino
 | Pieza | Tecnología |
 |---|---|
 | Lenguaje y framework | Java 17, Spring Boot 4.1, Maven |
-| Persistencia | Spring Data JPA · MySQL (local) · PostgreSQL en Supabase (producción) |
+| Persistencia | Spring Data JPA · PostgreSQL (local) · PostgreSQL en Supabase (producción) |
 | Seguridad | Spring Security, JWT (jjwt), BCrypt, roles DUENO · ESTILISTA · ADMIN |
 | Documentación | springdoc-openapi 3 (Swagger UI) |
 | Pagos | Stripe en modo prueba: Checkout, suscripción, pago único y webhook firmado e idempotente |
@@ -35,7 +35,7 @@ Organización por dominios con capas internas: `compartido`, `seguridad`, `auth`
 
 ## ▶️ Correrlo en local
 
-**Requisitos:** Java 17, MySQL 8 encendido, (opcional) Stripe CLI y una llave de Gemini.
+**Requisitos:** Java 17, PostgreSQL 17 encendido, (opcional) Stripe CLI y una llave de Gemini.
 
 1. Copia la plantilla de secretos y llénala con tus valores (este archivo nunca se sube a Git):
    ```bash
