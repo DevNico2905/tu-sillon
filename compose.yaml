@@ -1,0 +1,21 @@
+# PostgreSQL local: el mismo motor que producción. Arranca con: docker compose up -d
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: sillon-postgres
+    environment:
+      POSTGRES_DB: sillon
+      POSTGRES_USER: sillon
+      POSTGRES_PASSWORD: sillon_local
+      TZ: UTC
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - sillon-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sillon -d sillon"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  sillon-pg:

@@ -22,23 +22,24 @@ jobs:
     timeout-minutes: 15
 
     services:
-      mysql:
-        image: mysql:8.4
+      postgres:
+        image: postgres:17-alpine
         env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: sillon_ci
+          POSTGRES_DB: sillon_ci
+          POSTGRES_USER: sillon
+          POSTGRES_PASSWORD: sillon_ci
         ports:
-          - 3306:3306
+          - 5432:5432
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-cmd="pg_isready -U sillon -d sillon_ci"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=20
 
     env:
-      SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/sillon_ci
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_URL: jdbc:postgresql://127.0.0.1:5432/sillon_ci
+      SPRING_DATASOURCE_USERNAME: sillon
+      SPRING_DATASOURCE_PASSWORD: sillon_ci
       JWT_SECRETO: secreto-solo-para-ci-no-sirve-en-ningun-otro-lado
       TZ: UTC
 
