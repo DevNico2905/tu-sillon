@@ -2,7 +2,7 @@
 # La versión de Java (17) debe coincidir con <java.version> del pom.xml.
 
 # Etapa 1: compila el .jar con Maven (sin tests: ya corrieron en el CI antes del merge)
-FROM maven:3.9-eclipse-temurin-17 AS compilacion
+FROM maven:3.9-eclipse-temurin-26 AS compilacion
 WORKDIR /app
 COPY pom.xml .
 RUN mvn -B -q dependency:go-offline
