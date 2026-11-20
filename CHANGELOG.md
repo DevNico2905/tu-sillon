@@ -1,0 +1,44 @@
+# Changelog
+
+Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Cada entrada enlaza su ADR cuando hubo una decisión de arquitectura.
+
+## [Sin publicar]
+
+### Documentación
+- Documentación completa del proyecto: `docs/` (arquitectura, seguridad, base de datos, configuración, integraciones, operación), ADRs, `CONTRIBUTING.md`, y `SPEC.md` y `AGENTS.md` versionados.
+
+## [1.1.0] · 2026-11-20 · Endurecimiento para producción
+
+Tanda B0–B6, basada en una revisión de seguridad completa del backend (ver [`docs/seguridad.md`](docs/seguridad.md#revisión-de-seguridad-noviembre-2026)).
+
+### Agregado
+- **B0 · CI:** GitHub Actions corre `./mvnw verify` en cada PR y en `main`; Dependabot semanal para Maven, GitHub Actions y Docker; plantilla de PR. `main` protegida con un ruleset ([ADR-0011](docs/adr/0011-github-flow-con-ci-obligatorio.md)).
+- **B2 · CORS:** orígenes permitidos por la variable `CORS_ORIGENES`, validados al arrancar (sin comodines, solo `https://` o `http://localhost`).
+- **B3 · Sesiones:** refresh token aleatorio en cookie `httpOnly` (`SameSite=Strict`, `Path=/api/auth`), guardado como hash SHA-256, con rotación, detección de reuso y ventana de gracia de 10 s. Endpoints `POST /api/auth/refresh` y `POST /api/auth/logout`. Limpieza diaria de sesiones vencidas ([ADR-0005](docs/adr/0005-jwt-corto-y-refresh-token-en-cookie.md)).
+- **B4 · Rate limit:** Bucket4j en memoria por IP, por correo (login) y por salón (chat y reservas). Responde 429 con `Retry-After` ([ADR-0006](docs/adr/0006-rate-limit-en-memoria-con-bucket4j.md)).
+- **B5 · Migraciones:** Flyway con `V1__esquema_inicial.sql` (índices para las consultas de agenda, constraints con nombre y checks de negocio). `compose.yaml` con PostgreSQL 17 para desarrollo ([ADR-0003](docs/adr/0003-postgresql-en-todos-los-entornos.md), [ADR-0004](docs/adr/0004-migraciones-con-flyway-y-validate.md)).
+
+### Cambiado
+- **B1 · Configuración segura por defecto:** `JWT_SECRETO` es obligatorio en todos los entornos y se rechazan placeholders sin resolver. Nuevo perfil `prod`: Swagger apagado, sin valores por defecto para la base de datos ni la URL pública, y errores sin detalles internos ([ADR-0008](docs/adr/0008-configuracion-segura-por-defecto.md)).
+- **B3:** el access token pasa de 480 a **15 minutos**. El login deja de ser transacción de solo lectura.
+- **B4:** `server.forward-headers-strategy` pasa de `framework` a `native`, porque `framework` dejaba falsificar la IP del cliente ([ADR-0007](docs/adr/0007-ip-real-con-forward-headers-native.md)).
+- **B5:** MySQL reemplazado por PostgreSQL en local y en CI. `ddl-auto` pasa de `update` a `validate`.
+- **B6 · Contenedor:** corre con el usuario sin privilegios `10001`, el `.jar` es de solo lectura y la JVM termina ante un `OutOfMemoryError` ([ADR-0012](docs/adr/0012-contenedor-sin-root.md)).
+
+### Seguridad
+- Corregido: secreto JWT con valor por defecto público en el repositorio (crítico).
+- Corregido: el chat público permitía agotar los créditos de IA de cualquier salón.
+- Corregido: login y registro sin límite de intentos.
+- Corregido: IP del cliente falsificable mediante `X-Forwarded-For`.
+
+## [1.0.0] · 2026-11-19 · Entrega del curso
+
+Proyecto final de los módulos 4 y 5 de *Java AI Engineer* (Dev Senior Code), calificado con 5.0/5.0.
+
+### Agregado
+- Registro de salones y login con JWT; roles DUENO, ESTILISTA y ADMIN; aislamiento multi-inquilino.
+- Catálogo de servicios, estilistas, clientes y agenda con reglas de horario, cruces y transiciones de estado.
+- Reserva pública y disponibilidad calculada en Java.
+- Recordatorios y chatbot con IA (Gemini con respaldo), créditos atómicos y filtro anti-promesas.
+- Pagos con Stripe: plan PRO, paquete de créditos y webhook firmado e idempotente.
+- Swagger, colección de Postman con pruebas y despliegue en Render con Supabase.

@@ -1,18 +1,8 @@
 # 💈 Sillón
 
-Agenda inteligente para barberías y salones de belleza: un SaaS multi-inquilino en Java donde cada salón configura su horario, servicios y equipo, sus clientes reservan en línea solo en horarios realmente libres, y la IA redacta recordatorios y responde preguntas con el catálogo real del salón.
+Agenda inteligente para barberías y salones de belleza. Es un **SaaS multi-inquilino** en Java: cada salón configura su horario, servicios y equipo; sus clientes reservan en línea solo en horarios realmente libres; y la IA redacta recordatorios y responde preguntas con el catálogo real del salón.
 
----
-
-## 🌐 En producción
-
-| | URL |
-|---|---|
-| API | https://ds-java-ia-backend-tallermd4y5-238z.onrender.com/ |
-| Swagger | https://ds-java-ia-backend-tallermd4y5-238z.onrender.com//swagger-ui.html |
-| OpenAPI (JSON) | https://ds-java-ia-backend-tallermd4y5-238z.onrender.com//v3/api-docs |
-
-> Render en plan gratuito "duerme" el servicio cuando no se usa: la primera petición puede tardar cerca de un minuto.
+> Nació como proyecto final de los módulos 4 y 5 del curso *Java AI Engineer* (Dev Senior Code) y hoy sigue como proyecto personal: endurecimiento de seguridad, PostgreSQL con migraciones y, a continuación, un frontend en Next.js (repositorio aparte).
 
 ---
 
@@ -21,54 +11,60 @@ Agenda inteligente para barberías y salones de belleza: un SaaS multi-inquilino
 | Pieza | Tecnología |
 |---|---|
 | Lenguaje y framework | Java 17, Spring Boot 4.1, Maven |
-| Persistencia | Spring Data JPA · PostgreSQL (local) · PostgreSQL en Supabase (producción) |
-| Seguridad | Spring Security, JWT (jjwt), BCrypt, roles DUENO · ESTILISTA · ADMIN |
-| Documentación | springdoc-openapi 3 (Swagger UI) |
-| Pagos | Stripe en modo prueba: Checkout, suscripción, pago único y webhook firmado e idempotente |
-| IA | Gemini (formato OpenAI) por HTTP con `RestClient`, respaldo con formato Claude y fallback, créditos por respuesta |
-| Tests | JUnit 5 + Mockito (119 tests, sin llamadas a Gemini ni a Stripe) |
-| Despliegue | Docker (dos etapas) · Render · Supabase |
-
-Organización por dominios con capas internas: `compartido`, `seguridad`, `auth`, `salon`, `usuario`, `servicio`, `cliente`, `cita`, `publico`, `pago`, `chat`, `ia`.
+| Persistencia | Spring Data JPA · PostgreSQL 17 en todos los entornos · migraciones con Flyway |
+| Seguridad | Spring Security · access token JWT (15 min) · refresh token en cookie httpOnly con rotación · BCrypt · rate limit con Bucket4j · CORS por lista blanca |
+| Pagos | Stripe (modo prueba): Checkout, suscripción, pago único y webhook firmado e idempotente |
+| IA | Gemini por HTTP (formato OpenAI) con `RestClient`, respaldo con formato Claude, créditos por respuesta |
+| Documentación de la API | springdoc-openapi (Swagger UI, solo en desarrollo) |
+| Calidad | JUnit 5 + Mockito · GitHub Actions en cada PR · Dependabot |
+| Contenedor | Docker en dos etapas, usuario sin privilegios |
 
 ---
 
-## ▶️ Correrlo en local
+## ▶️ Correrlo en local (5 minutos)
 
-**Requisitos:** Java 17, PostgreSQL 17 encendido, (opcional) Stripe CLI y una llave de Gemini.
+**Requisitos:** Java 17 o superior, Docker Desktop.
 
-1. Copia la plantilla de secretos y llénala con tus valores (este archivo nunca se sube a Git):
-   ```bash
-   cp secrets.example.properties secrets.properties
-   ```
-   Como mínimo: `spring.datasource.password`. Para IA: `sillon.ia.openai.llave`. Para pagos: la `sk_test_`, los dos `price_` y el `whsec_` de la Stripe CLI.
-2. (Opcional, para pagos) En otra terminal, el puente de webhooks:
-   ```bash
-   stripe listen --events checkout.session.completed,customer.subscription.deleted --forward-to localhost:8080/api/pagos/webhook
-   ```
-3. Arranca la API (crea la base `sillon_db` sola):
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-4. Tests:
-   ```bash
-   ./mvnw test
-   ```
+```bash
+# 1. Base de datos (PostgreSQL 17 en Docker, solo accesible desde tu máquina)
+docker compose up -d
+
+# 2. Secretos locales: copia la plantilla y pon, como mínimo, sillon.jwt.secreto
+cp secrets.example.properties secrets.properties
+echo "sillon.jwt.secreto=$(openssl rand -base64 48)" >> secrets.properties
+
+# 3. Arranca la API (Flyway crea el esquema al iniciar)
+./mvnw spring-boot:run
+```
+
+- API: http://localhost:8080
+- Swagger: http://localhost:8080/swagger-ui.html
+
+Para la IA y los pagos hacen falta más llaves; está todo en [`docs/configuracion.md`](docs/configuracion.md).
+
+**Tests** (necesitan la base de `compose` encendida):
+
+```bash
+./mvnw verify
+```
 
 ---
 
-## ✅ Cómo verificarlo
+## 📖 Documentación
 
-La evidencia es ejecutable: una colección de Postman con pruebas automáticas en cada petición.
-
-1. Importa en Postman la carpeta `postman/`:
-   - `sillon.postman_collection.json`
-   - `local.postman_environment.json` y `produccion.postman_environment.json` (una sola variable: `baseUrl`)
-2. En la colección, pon como **Current value** de `secretoWebhook` el `whsec_` que imprime `stripe listen` (local) o el del destino de Stripe (producción). Lo usan las peticiones que firman webhooks.
-3. **Run collection** → selecciona las carpetas **1 a 6**, en orden, con el entorno `local` o `produccion`. Todo debe quedar en verde.
-4. Carpeta **7 (manual)**: abre la `urlPago` que imprime "Crear pago del plan PRO" (también queda en la variable `urlPagoPro`), paga con la tarjeta de prueba **4242 4242 4242 4242** (cualquier fecha futura, cualquier CVC) y luego corre la carpeta 7.
-
-Cada ejecución usa un sufijo con la hora y calcula sus propias fechas: se puede correr muchas veces contra producción sin chocar.
+| Documento | Qué encuentras |
+|---|---|
+| [`SPEC.md`](SPEC.md) | **Fuente de verdad del negocio:** roles, reglas R1–R39, contrato de la API |
+| [`docs/arquitectura.md`](docs/arquitectura.md) | Dominios, capas, multi-inquilino y el recorrido de una petición |
+| [`docs/seguridad.md`](docs/seguridad.md) | Modelo de amenazas, sesiones, rate limit, CORS y la revisión de seguridad |
+| [`docs/base-de-datos.md`](docs/base-de-datos.md) | Diagrama entidad-relación, índices y reglas de Flyway |
+| [`docs/configuracion.md`](docs/configuracion.md) | Todas las variables y propiedades, por perfil |
+| [`docs/integraciones.md`](docs/integraciones.md) | Stripe e IA: flujos, fallos y costos |
+| [`docs/operacion.md`](docs/operacion.md) | Runbook: desplegar, rotar secretos y "qué hago si…" |
+| [`docs/adr/`](docs/adr/) | Decisiones de arquitectura: qué se decidió, por qué y qué se aceptó a cambio |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Cómo trabajar en el repo: ramas, commits, PRs, migraciones y tests |
+| [`CHANGELOG.md`](CHANGELOG.md) | Qué cambió y cuándo |
+| [`AGENTS.md`](AGENTS.md) | Reglas para asistentes de código (Claude Code y similares) |
 
 ---
 
@@ -78,17 +74,17 @@ Cada ejecución usa un sufijo con la hora y calcula sus propias fechas: se puede
 |---|---|---|
 | POST | `/api/auth/registro` | Público |
 | POST | `/api/auth/login` | Público |
+| POST | `/api/auth/refresh` | Público (cookie de sesión) |
+| POST | `/api/auth/logout` | Público (cookie de sesión) |
 | GET | `/api/salon` | DUENO |
 | PUT | `/api/salon/configuracion` | DUENO |
-| POST | `/api/servicios` | DUENO |
-| GET | `/api/servicios` | DUENO, ESTILISTA |
+| POST · GET | `/api/servicios` | POST: DUENO · GET: DUENO, ESTILISTA |
 | PUT | `/api/servicios/{id}` | DUENO |
-| POST | `/api/estilistas` | DUENO |
-| GET | `/api/estilistas` | DUENO |
+| POST · GET | `/api/estilistas` | DUENO |
 | GET | `/api/clientes` | DUENO |
 | POST | `/api/citas` | DUENO |
 | GET | `/api/citas?fecha=` | DUENO (todas), ESTILISTA (las suyas) |
-| PATCH | `/api/citas/{id}/estado` | DUENO, ESTILISTA (solo COMPLETADA / NO_ASISTIO) |
+| PATCH | `/api/citas/{id}/estado` | DUENO, ESTILISTA (solo COMPLETADA o NO_ASISTIO) |
 | POST | `/api/citas/{id}/recordatorio` | DUENO · gasta 1 crédito de IA |
 | GET | `/api/publico/salones/{slug}` | Público |
 | GET | `/api/publico/salones/{slug}/disponibilidad?servicioId=&estilistaId=&fecha=` | Público |
@@ -96,35 +92,15 @@ Cada ejecución usa un sufijo con la hora y calcula sus propias fechas: se puede
 | POST | `/api/publico/salones/{slug}/chat` | Público · gasta 1 crédito del salón |
 | GET | `/api/solicitudes` | DUENO |
 | PATCH | `/api/solicitudes/{id}/atendida` | DUENO |
-| POST | `/api/pagos/suscripcion` | DUENO |
-| POST | `/api/pagos/creditos` | DUENO |
+| POST | `/api/pagos/suscripcion` · `/api/pagos/creditos` | DUENO |
 | POST | `/api/pagos/webhook` | Stripe (firma `Stripe-Signature`) |
 | GET | `/api/pagos/resultado?estado=` | Público |
 | GET | `/api/admin/salones` | ADMIN |
-| POST | `/api/auth/refresh` | Público (cookie) | Renueva el access token con la cookie httpOnly |
-| POST | `/api/auth/logout` | Público (cookie) | Cierra la sesión de este dispositivo |
 
-Todos los errores responden con el mismo formato: `codigo`, `error`, `mensaje`, `fecha`.
+Todos los errores usan el mismo formato: `codigo`, `error`, `mensaje`, `fecha`. El contrato completo está en [`SPEC.md`](SPEC.md#9-contrato-de-la-api).
 
 ---
 
-## ⚙️ Variables de entorno (Render)
+## 🧪 Colección de Postman
 
-Solo los nombres; los valores viven en Render, nunca en el repositorio.
-
-| Variable | Para qué |
-|---|---|
-| `SPRING_DATASOURCE_URL` | JDBC de Supabase (Session Pooler, `sslmode=require`) |
-| `SPRING_DATASOURCE_USERNAME` | Usuario del pooler |
-| `SPRING_DATASOURCE_PASSWORD` | Contraseña de la base |
-| `JWT_SECRETO` | Secreto de firma de los JWT (32+ caracteres) |
-| `URL_PUBLICA` | URL de la API (para volver de Stripe) |
-| `STRIPE_CLAVE_SECRETA` | Llave secreta de prueba |
-| `STRIPE_PRECIO_PRO` | Id del precio del plan PRO |
-| `STRIPE_PRECIO_CREDITOS` | Id del precio del paquete de créditos |
-| `STRIPE_SECRETO_WEBHOOK` | Secreto del destino de webhook de producción |
-| `GEMINI_LLAVE` | Llave de Gemini |
-| `SPRING_PROFILES_ACTIVE` | `prod` (apaga Swagger y exige todas las variables) |
-| `CORS_ORIGENES` | Origen(es) del front, separados por coma (ej: `https://app.midominio.com`) |
-
-`STRIPE_URL_API` y `SILLON_IA_OPENAI_URL` no se configuran en Render: sus valores por defecto apuntan a Stripe y a Gemini reales. Existen para que el calificador use sus simuladores.# tu-sillon-web
+`postman/` tiene la colección con pruebas automáticas en cada petición y los entornos `local` y `produccion`. Viene del proyecto del curso: cubre el negocio completo, pero no usa todavía la cookie de sesión (refresh/logout).
