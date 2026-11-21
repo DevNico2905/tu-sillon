@@ -57,7 +57,7 @@ public class PublicoController {
     @GetMapping("/disponibilidad")
     public DisponibilidadResponse disponibilidad(@PathVariable String slug,
                                                  @RequestParam Long servicioId,
-                                                 @RequestParam Long estilistaId,
+                                                 @RequestParam(required = false) Long estilistaId,
                                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
         Long salonId = salonService.obtenerPorSlug(slug).getId();
         return citaService.disponibilidad(salonId, servicioId, estilistaId, fecha);

@@ -4,6 +4,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). C
 
 ## [Sin publicar]
 
+### Agregado
+- **B7 · Cualquier estilista (R40):** `estilistaId` opcional en la disponibilidad y al agendar. Sin él, la disponibilidad une las horas de todos los estilistas que ofrecen el servicio y la reserva asigna al libre con menos citas ese día.
+
 ### Documentación
 - Documentación completa del proyecto: `docs/` (arquitectura, seguridad, base de datos, configuración, integraciones, operación), ADRs, `CONTRIBUTING.md`, y `SPEC.md` y `AGENTS.md` versionados.
 
