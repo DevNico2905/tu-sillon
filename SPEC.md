@@ -136,11 +136,11 @@ Un crédito = una respuesta de la IA. Existen porque cada respuesta cuesta token
 - **R17 Cliente.** Al agendar se busca por teléfono normalizado dentro del salón; si no existe, se crea.
 - **R18 Orden al agendar** (un solo método para salón y reserva en línea):
   1. El servicio existe en el salón y está activo (404).
-  2. El estilista existe en el salón, está activo (404) y ofrece el servicio (409).
+  2. Si llega `estilistaId`: el estilista existe en el salón, está activo (404) y ofrece el servicio (409). Si no llega, ver R40.
   3. Se calcula `fin`.
   4. No está en el pasado (409).
   5. Cumple el horario del salón (409, con un mensaje que diga el horario).
-  6. No se cruza con otra cita del estilista que ocupe agenda (409).
+  6. Con estilista elegido: no se cruza con otra cita suya que ocupe agenda (409). Sin estilista: se asigna uno libre (R40).
   7. Se busca o crea el cliente, se copia el precio y se guarda con su estado y origen.
 
 ### 8.4 Transiciones de estado
@@ -210,6 +210,12 @@ COMPLETADA, CANCELADA y NO_ASISTIO son finales. Cualquier otra transición: 409.
   El slug se compara en minúsculas para el límite por salón. La IP la resuelve el servidor recorriendo `X-Forwarded-For` desde el proxy de confianza; nunca se toma el valor que envía el cliente.
 - **R39 Orígenes del navegador.** Solo los orígenes de `CORS_ORIGENES` (exactos, sin comodines, `https://` salvo `localhost`) pueden llamar a la API desde un navegador. Para que la cookie de sesión funcione, el frontend y la API deben compartir sitio (por ejemplo `app.dominio.com` y `api.dominio.com`).
 
+### 8.9 Cualquier estilista
+
+- **R40 Agendar sin elegir estilista.** `estilistaId` es opcional al agendar (salón y reserva en línea) y al consultar disponibilidad.
+  - **Disponibilidad sin estilista:** las horas en que **al menos un** estilista activo que ofrece el servicio está libre, sin repetir y en orden. El campo `estilista` de la respuesta va en `null`. Si nadie ofrece el servicio, la lista va vacía (no es un error).
+  - **Agendar sin estilista:** se validan servicio, pasado y horario igual que en R18; luego, entre los estilistas activos que ofrecen el servicio y están libres en ese rango, se asigna el que tenga **menos citas que ocupan agenda ese día**; si empatan, el primero por nombre. Si nadie ofrece el servicio o nadie está libre: 409. La respuesta trae el estilista asignado.
+
 ---
 
 ## 9. Contrato de la API
@@ -272,7 +278,7 @@ En validación, `mensaje` lista los campos que fallaron con su mensaje, separado
 
 | Método y ruta | Recibe | Responde |
 |---|---|---|
-| POST (DUENO) | clienteNombre, clienteTelefono (7 a 30), servicioId, estilistaId, inicio, nota (opcional, máx. 300) | 201 cita · 400 · 404 · 409 |
+| POST (DUENO) | clienteNombre, clienteTelefono (7 a 30), servicioId, estilistaId (opcional, R40), inicio, nota (opcional, máx. 300) | 201 cita · 400 · 404 · 409 |
 | GET ?fecha= (DUENO, ESTILISTA) | fecha opcional (hoy por defecto) | 200 citas del día ordenadas por hora; el estilista solo ve las suyas |
 | PATCH /{id}/estado (DUENO, ESTILISTA) | estado | 200 cita · 400 · 403 · 404 · 409 |
 | POST /{id}/recordatorio (DUENO) | — | 200: citaId, telefonoCliente, mensaje, creditosRestantes, factura · 402 · 404 · 409 · 502 · 503 |
@@ -286,7 +292,7 @@ En validación, `mensaje` lista los campos que fallaron con su mensaje, separado
 | Método y ruta | Recibe | Responde |
 |---|---|---|
 | GET /{slug} | — | 200: nombre, slug, ciudad, direccion, telefono, horario (texto), servicios (solo activos), estilistas (id, nombre, servicioIds). Nunca correos · 404 |
-| GET /{slug}/disponibilidad?servicioId=&estilistaId=&fecha= | Los tres obligatorios | 200: fecha, servicio, estilista, duracionMinutos, horariosLibres · 400 · 404 · 409 |
+| GET /{slug}/disponibilidad?servicioId=&estilistaId=&fecha= | servicioId y fecha obligatorios; estilistaId opcional (R40) | 200: fecha, servicio, estilista (null sin estilistaId), duracionMinutos, horariosLibres · 400 · 404 · 409 |
 | POST /{slug}/reservas | Igual que POST /api/citas | 201 cita PENDIENTE, EN_LINEA · 400 · 404 · 409 |
 | POST /{slug}/chat | clienteNombre, clienteContacto (máx. 120), historial (1 a 20 turnos: rol CLIENTE o ASISTENTE, texto máx. 500) | 200: respuesta, escalado, solicitudId (o null), factura · 400 · 402 · 404 · 502 · 503 |
 

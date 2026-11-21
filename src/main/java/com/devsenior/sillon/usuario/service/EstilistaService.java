@@ -89,6 +89,14 @@ public class EstilistaService {
                 .toList();
     }
 
+    /** Estilistas activos del salón que ofrecen el servicio, ordenados por nombre. */
+    @Transactional(readOnly = true)
+    public List<Usuario> activosQueOfrecen(Long salonId, Long servicioId) {
+        return usuarioRepository.findBySalonIdAndRolAndActivoTrueOrderByNombreAsc(salonId, Rol.ESTILISTA).stream()
+                .filter(estilista -> estilista.ofrece(servicioId))
+                .toList();
+    }
+
     /** El estilista debe existir en el salón y estar activo (404 si no). */
     @Transactional(readOnly = true)
     public Usuario obtenerActivo(Long salonId, Long estilistaId) {

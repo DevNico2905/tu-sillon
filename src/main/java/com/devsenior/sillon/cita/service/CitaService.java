@@ -23,9 +23,12 @@ import com.devsenior.sillon.usuario.model.Usuario;
 import com.devsenior.sillon.usuario.service.EstilistaService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,21 +73,16 @@ public class CitaService {
     }
 
     /**
-     * Único punto de entrada para agendar (SPEC R18). Orden:
-     * 1. Servicio del salón y activo (404). 2. Estilista del salón y activo (404) que ofrece el servicio (409).
+     * Único punto de entrada para agendar (SPEC R18 y R40). Orden:
+     * 1. Servicio del salón y activo (404). 2. Si llega estilista: del salón y activo (404) y que ofrece el servicio (409).
      * 3. Fin = inicio + duración. 4. No en el pasado (409). 5. Horario del salón (409).
-     * 6. Sin cruces con citas que ocupan agenda (409). 7. Cliente, precio congelado, estado y origen.
+     * 6. Con estilista: sin cruces (409). Sin estilista: se asigna uno libre (409 si no hay).
+     * 7. Cliente, precio congelado, estado y origen.
      */
     private Cita agendar(Long salonId, CitaRequest request, EstadoCita estadoInicial, OrigenCita origen) {
-        Servicio servicio = servicioService.obtenerEntidad(salonId, request.servicioId());
-        if (!servicio.isActivo()) {
-            throw new RecursoNoEncontradoException("No existe un servicio activo con id " + request.servicioId());
-        }
-
-        Usuario estilista = estilistaService.obtenerActivo(salonId, request.estilistaId());
-        if (!estilista.ofrece(servicio.getId())) {
-            throw new ReglaNegocioException(estilista.getNombre() + " no ofrece el servicio " + servicio.getNombre());
-        }
+        Servicio servicio = obtenerServicioActivo(salonId, request.servicioId());
+        Usuario elegido = request.estilistaId() == null ? null
+                : obtenerEstilistaQueOfrece(salonId, request.estilistaId(), servicio);
 
         LocalDateTime inicio = request.inicio().withSecond(0).withNano(0);
         LocalDateTime fin = inicio.plusMinutes(servicio.getDuracionMinutos());
@@ -94,10 +92,14 @@ public class CitaService {
         Salon salon = salonService.obtenerEntidad(salonId);
         reglasAgenda.validarHorario(salon.getConfiguracion(), inicio, fin);
 
-        boolean hayCruce = citaRepository.existsByEstilistaIdAndEstadoInAndInicioLessThanAndFinGreaterThan(
-                estilista.getId(), EstadoCita.OCUPAN_AGENDA, fin, inicio);
-        if (hayCruce) {
-            throw new ReglaNegocioException(estilista.getNombre() + " ya tiene una cita en ese horario");
+        Usuario estilista;
+        if (elegido != null) {
+            if (tieneCruce(elegido, inicio, fin)) {
+                throw new ReglaNegocioException(elegido.getNombre() + " ya tiene una cita en ese horario");
+            }
+            estilista = elegido;
+        } else {
+            estilista = asignarEstilistaLibre(salonId, servicio, inicio, fin);
         }
 
         Cliente cliente = clienteService.buscarOCrear(salon, request.clienteNombre(), request.clienteTelefono());
@@ -117,35 +119,84 @@ public class CitaService {
     }
 
     /**
-     * Horas de inicio libres de un estilista para un servicio en una fecha. La calcula Java, nunca la IA.
-     * 404 si el servicio o el estilista no existen en el salón; 409 si el estilista no ofrece el servicio.
+     * Horas de inicio libres para un servicio en una fecha. La calcula Java, nunca la IA.
+     * Con estilista: sus horas (404 si no existe, 409 si no ofrece el servicio).
+     * Sin estilista (R40): las horas en que AL MENOS UN estilista activo que ofrece el servicio está libre;
+     * el campo estilista de la respuesta va en null. Si nadie ofrece el servicio, la lista va vacía.
      */
     @Transactional(readOnly = true)
     public DisponibilidadResponse disponibilidad(Long salonId, Long servicioId, Long estilistaId, LocalDate fecha) {
+        Servicio servicio = obtenerServicioActivo(salonId, servicioId);
+        Usuario elegido = estilistaId == null ? null : obtenerEstilistaQueOfrece(salonId, estilistaId, servicio);
+        Salon salon = salonService.obtenerEntidad(salonId);
+
+        List<Usuario> estilistas = elegido != null ? List.of(elegido)
+                : estilistaService.activosQueOfrecen(salonId, servicio.getId());
+
+        // TreeSet: une las horas de todos los estilistas sin repetir y en orden
+        TreeSet<LocalTime> libres = new TreeSet<>();
+        for (Usuario estilista : estilistas) {
+            libres.addAll(reglasAgenda.horariosLibres(salon.getConfiguracion(), fecha,
+                    servicio.getDuracionMinutos(), ocupadosDelDia(estilista, fecha)));
+        }
+        return new DisponibilidadResponse(fecha, servicio.getNombre(), elegido == null ? null : elegido.getNombre(),
+                servicio.getDuracionMinutos(), libres.stream().map(FORMATO_HORA::format).toList());
+    }
+
+    /**
+     * Sin estilista elegido (R40): entre los activos que ofrecen el servicio y están libres en [inicio, fin),
+     * el que tenga menos citas ese día; si empatan, el primero por nombre. 409 si no hay ninguno.
+     */
+    private Usuario asignarEstilistaLibre(Long salonId, Servicio servicio, LocalDateTime inicio, LocalDateTime fin) {
+        List<Usuario> candidatos = estilistaService.activosQueOfrecen(salonId, servicio.getId());
+        if (candidatos.isEmpty()) {
+            throw new ReglaNegocioException("Nadie en el salón ofrece el servicio " + servicio.getNombre());
+        }
+        List<Usuario> libres = candidatos.stream().filter(estilista -> !tieneCruce(estilista, inicio, fin)).toList();
+        if (libres.isEmpty()) {
+            throw new ReglaNegocioException("Ya no hay estilistas libres para " + servicio.getNombre() + " en ese horario");
+        }
+        if (libres.size() == 1) {
+            return libres.get(0);
+        }
+        LocalDateTime desde = inicio.toLocalDate().atStartOfDay();
+        LocalDateTime hasta = desde.plusDays(1);
+        return libres.stream()
+                .min(Comparator.comparingLong((Usuario estilista) -> citaRepository
+                                .countByEstilistaIdAndEstadoInAndInicioGreaterThanEqualAndInicioLessThan(
+                                        estilista.getId(), EstadoCita.OCUPAN_AGENDA, desde, hasta))
+                        .thenComparing(Usuario::getNombre))
+                .orElseThrow();
+    }
+
+    private Servicio obtenerServicioActivo(Long salonId, Long servicioId) {
         Servicio servicio = servicioService.obtenerEntidad(salonId, servicioId);
         if (!servicio.isActivo()) {
             throw new RecursoNoEncontradoException("No existe un servicio activo con id " + servicioId);
         }
+        return servicio;
+    }
+
+    private Usuario obtenerEstilistaQueOfrece(Long salonId, Long estilistaId, Servicio servicio) {
         Usuario estilista = estilistaService.obtenerActivo(salonId, estilistaId);
         if (!estilista.ofrece(servicio.getId())) {
             throw new ReglaNegocioException(estilista.getNombre() + " no ofrece el servicio " + servicio.getNombre());
         }
-        Salon salon = salonService.obtenerEntidad(salonId);
+        return estilista;
+    }
 
-        List<ReglasAgenda.Intervalo> ocupados = citaRepository
+    private boolean tieneCruce(Usuario estilista, LocalDateTime inicio, LocalDateTime fin) {
+        return citaRepository.existsByEstilistaIdAndEstadoInAndInicioLessThanAndFinGreaterThan(
+                estilista.getId(), EstadoCita.OCUPAN_AGENDA, fin, inicio);
+    }
+
+    private List<ReglasAgenda.Intervalo> ocupadosDelDia(Usuario estilista, LocalDate fecha) {
+        return citaRepository
                 .findByEstilistaIdAndEstadoInAndInicioLessThanAndFinGreaterThan(
                         estilista.getId(), EstadoCita.OCUPAN_AGENDA, fecha.plusDays(1).atStartOfDay(), fecha.atStartOfDay())
                 .stream()
                 .map(cita -> new ReglasAgenda.Intervalo(cita.getInicio(), cita.getFin()))
                 .toList();
-
-        List<String> libres = reglasAgenda
-                .horariosLibres(salon.getConfiguracion(), fecha, servicio.getDuracionMinutos(), ocupados)
-                .stream()
-                .map(FORMATO_HORA::format)
-                .toList();
-        return new DisponibilidadResponse(fecha, servicio.getNombre(), estilista.getNombre(),
-                servicio.getDuracionMinutos(), libres);
     }
 
     /** Agenda de un día (hoy si no llega fecha). El dueño ve todas; el estilista solo las suyas. */

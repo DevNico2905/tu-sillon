@@ -29,4 +29,8 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
 
     List<Cita> findBySalonIdAndEstilistaIdAndInicioGreaterThanEqualAndInicioLessThanOrderByInicioAsc(
             Long salonId, Long estilistaId, LocalDateTime desde, LocalDateTime hasta);
+
+    /** Cuántas citas que ocupan agenda tiene el estilista en [desde, hasta): sirve para repartir la carga. */
+    long countByEstilistaIdAndEstadoInAndInicioGreaterThanEqualAndInicioLessThan(
+            Long estilistaId, Collection<EstadoCita> estados, LocalDateTime desde, LocalDateTime hasta);
 }
