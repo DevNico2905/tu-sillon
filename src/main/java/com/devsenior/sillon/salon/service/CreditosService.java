@@ -26,7 +26,7 @@ public class CreditosService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("No existe el salón"))
                 .getCreditosIa();
         if (creditos <= 0) {
-            throw new PagoRequeridoException("El salón no tiene créditos de IA. Compre un paquete o active el plan PRO");
+            throw new PagoRequeridoException("El salón no tiene créditos de IA. Compra un paquete o pásate al plan PRO");
         }
     }
 

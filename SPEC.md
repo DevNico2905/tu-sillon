@@ -216,6 +216,10 @@ COMPLETADA, CANCELADA y NO_ASISTIO son finales. Cualquier otra transición: 409.
   - **Disponibilidad sin estilista:** las horas en que **al menos un** estilista activo que ofrece el servicio está libre, sin repetir y en orden. El campo `estilista` de la respuesta va en `null`. Si nadie ofrece el servicio, la lista va vacía (no es un error).
   - **Agendar sin estilista:** se validan servicio, pasado y horario igual que en R18; luego, entre los estilistas activos que ofrecen el servicio y están libres en ese rango, se asigna el que tenga **menos citas que ocupan agenda ese día**; si empatan, el primero por nombre. Si nadie ofrece el servicio o nadie está libre: 409. La respuesta trae el estilista asignado.
 
+### 8.10 Tono
+
+- **R41 Se tutea.** Todo texto que la API devuelve para personas (mensajes de error, de pago y el mensaje seguro del chatbot) y todo lo que redacta la IA (chatbot y recordatorios) trata a la persona de tú, con tono cálido y cercano. Nunca de usted. Los mensajes de log no aplican.
+
 ---
 
 ## 9. Contrato de la API

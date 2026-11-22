@@ -32,7 +32,7 @@ public class ChatbotService {
 
     /** Lo que recibe el cliente cuando Java bloquea una promesa indebida. No contiene ninguna palabra prohibida. */
     static final String MENSAJE_SEGURO =
-            "Gracias por escribirnos. Una persona de nuestro equipo revisará su solicitud y lo contactará pronto.";
+            "Gracias por escribirnos. Una persona del salón revisará tu mensaje y te contactará pronto.";
 
     /** Si la respuesta de la IA contiene alguna de estas palabras, no se le muestra al cliente. */
     private static final List<String> PALABRAS_DE_PROMESA =

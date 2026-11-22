@@ -32,13 +32,13 @@ public class EscritorErroresSeguridad implements AuthenticationEntryPoint, Acces
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException ex)
             throws IOException {
-        escribir(response, HttpStatus.UNAUTHORIZED, "Debe iniciar sesión con un token válido");
+        escribir(response, HttpStatus.UNAUTHORIZED, "Necesitas iniciar sesión para continuar");
     }
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException ex)
             throws IOException {
-        escribir(response, HttpStatus.FORBIDDEN, "Su rol no tiene permiso para esta acción");
+        escribir(response, HttpStatus.FORBIDDEN, "Tu rol no tiene permiso para esta acción");
     }
 
     /** También lo usa FiltroLimite para el 429. */

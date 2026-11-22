@@ -94,12 +94,12 @@ public class ManejadorGlobalErrores {
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorRespuesta> manejarAutenticacion(AuthenticationException ex) {
-        return responder(HttpStatus.UNAUTHORIZED, "Debe iniciar sesión con un token válido");
+        return responder(HttpStatus.UNAUTHORIZED, "Necesitas iniciar sesión para continuar");
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorRespuesta> manejarAccesoDenegado(AccessDeniedException ex) {
-        return responder(HttpStatus.FORBIDDEN, "Su rol no tiene permiso para esta acción");
+        return responder(HttpStatus.FORBIDDEN, "Tu rol no tiene permiso para esta acción");
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

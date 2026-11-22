@@ -7,6 +7,6 @@ import org.springframework.http.HttpStatus;
 public class IaNoDisponibleException extends ExcepcionApi {
 
     public IaNoDisponibleException() {
-        super(HttpStatus.SERVICE_UNAVAILABLE, "El asistente de IA no está disponible en este momento. Intente más tarde");
+        super(HttpStatus.SERVICE_UNAVAILABLE, "El asistente de IA no está disponible en este momento. Intenta de nuevo en un rato");
     }
 }
