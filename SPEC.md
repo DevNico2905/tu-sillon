@@ -220,6 +220,10 @@ COMPLETADA, CANCELADA y NO_ASISTIO son finales. Cualquier otra transición: 409.
 
 - **R41 Se tutea.** Todo texto que la API devuelve para personas (mensajes de error, de pago y el mensaje seguro del chatbot) y todo lo que redacta la IA (chatbot y recordatorios) trata a la persona de tú, con tono cálido y cercano. Nunca de usted. Los mensajes de log no aplican.
 
+### 8.11 Horario público
+
+- **R42 Horario en datos.** El catálogo público trae el horario dos veces: `horario`, el texto para mostrar, y `horaApertura`, `horaCierre` y `abreDomingos`, los mismos datos para que el front arme el calendario sin interpretar el texto. Salen de la misma configuración del salón, así que nunca se contradicen. Son los valores que usa R14 para rechazar citas.
+
 ---
 
 ## 9. Contrato de la API
@@ -295,7 +299,7 @@ En validación, `mensaje` lista los campos que fallaron con su mensaje, separado
 
 | Método y ruta | Recibe | Responde |
 |---|---|---|
-| GET /{slug} | — | 200: nombre, slug, ciudad, direccion, telefono, horario (texto), servicios (solo activos), estilistas (id, nombre, servicioIds). Nunca correos · 404 |
+| GET /{slug} | — | 200: nombre, slug, ciudad, direccion, telefono, horario (texto), horaApertura, horaCierre, abreDomingos (R42), servicios (solo activos), estilistas (id, nombre, servicioIds). Nunca correos · 404 |
 | GET /{slug}/disponibilidad?servicioId=&estilistaId=&fecha= | servicioId y fecha obligatorios; estilistaId opcional (R40) | 200: fecha, servicio, estilista (null sin estilistaId), duracionMinutos, horariosLibres · 400 · 404 · 409 |
 | POST /{slug}/reservas | Igual que POST /api/citas | 201 cita PENDIENTE, EN_LINEA · 400 · 404 · 409 |
 | POST /{slug}/chat | clienteNombre, clienteContacto (máx. 120), historial (1 a 20 turnos: rol CLIENTE o ASISTENTE, texto máx. 500) | 200: respuesta, escalado, solicitudId (o null), factura · 400 · 402 · 404 · 502 · 503 |

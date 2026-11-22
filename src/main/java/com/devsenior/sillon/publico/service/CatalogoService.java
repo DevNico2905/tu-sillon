@@ -2,6 +2,7 @@ package com.devsenior.sillon.publico.service;
 
 import com.devsenior.sillon.publico.dto.CatalogoResponse;
 import com.devsenior.sillon.publico.dto.EstilistaPublicoResponse;
+import com.devsenior.sillon.salon.model.ConfiguracionSalon;
 import com.devsenior.sillon.salon.model.Salon;
 import com.devsenior.sillon.salon.service.SalonService;
 import com.devsenior.sillon.servicio.dto.ServicioResponse;
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Arma, por slug, los datos públicos del salón: ubicación, horario en texto, servicios y estilistas activos. */
+/** Arma, por slug, los datos públicos del salón: ubicación, horario (texto y datos), servicios y estilistas activos. */
 @Service
 public class CatalogoService {
 
@@ -47,8 +48,10 @@ public class CatalogoService {
                 .map(this::estilistaPublico)
                 .toList();
 
+        ConfiguracionSalon horario = salon.getConfiguracion();
         return new CatalogoResponse(salon.getNombre(), salon.getSlug(), salon.getCiudad(), salon.getDireccion(),
-                salon.getTelefono(), salon.getConfiguracion().descripcion(), servicios, estilistas);
+                salon.getTelefono(), horario.descripcion(), horario.getHoraApertura(), horario.getHoraCierre(),
+                horario.isAbreDomingos(), servicios, estilistas);
     }
 
     /**
