@@ -6,6 +6,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). C
 
 ### Agregado
 - **B7 · Cualquier estilista (R40):** `estilistaId` opcional en la disponibilidad y al agendar. Sin él, la disponibilidad une las horas de todos los estilistas que ofrecen el servicio y la reserva asigna al libre con menos citas ese día.
+- **B9 · Horario en el catálogo público (R42):** `GET /api/publico/salones/{slug}` agrega `horaApertura`, `horaCierre` y `abreDomingos`, para que la web bloquee días y horas cerradas sin interpretar el texto.
 
 ### Cambiado
 - **B8 · Tono de tú (R41):** mensajes de error, de pago y el mensaje seguro del chatbot pasan a tú; los prompts del chatbot y del recordatorio piden tutear.
