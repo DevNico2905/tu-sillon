@@ -54,8 +54,8 @@ public class PagoController {
     @GetMapping("/resultado")
     public ResultadoPagoResponse resultado(@RequestParam String estado) {
         String mensaje = "exito".equalsIgnoreCase(estado)
-                ? "Pago recibido. Su plan se actualizará en cuanto Stripe confirme el pago."
-                : "El pago fue cancelado. Puede intentarlo de nuevo cuando quiera.";
+                ? "Pago recibido. Tu plan se actualizará en cuanto Stripe confirme el pago."
+                : "El pago fue cancelado. Puedes intentarlo de nuevo cuando quieras.";
         return new ResultadoPagoResponse(estado, mensaje);
     }
 }

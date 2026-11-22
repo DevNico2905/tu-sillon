@@ -57,7 +57,7 @@ public class EstilistaService {
         long estilistasActuales = usuarioRepository.countBySalonIdAndRol(salonId, Rol.ESTILISTA);
         if (salon.getPlan() == Plan.GRATIS && estilistasActuales >= negocio.limiteEstilistasGratis()) {
             throw new PagoRequeridoException("El plan GRATIS permite máximo "
-                    + negocio.limiteEstilistasGratis() + " estilistas. Active el plan PRO para agregar más");
+                    + negocio.limiteEstilistasGratis() + " estilistas. Pásate al plan PRO para agregar más");
         }
 
         String email = AuthService.normalizarCorreo(request.email());

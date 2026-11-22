@@ -24,7 +24,7 @@ public class ConfiguracionSwagger {
                         .version("1.0")
                         .description("Agenda inteligente para barberías y salones de belleza: SaaS multi-inquilino "
                                 + "con pagos en Stripe (modo prueba) e IA con créditos. "
-                                + "Para las rutas protegidas: registre o inicie sesión en 1 Autenticación, "
+                                + "Para las rutas protegidas: regístrate o inicia sesión en 1 Autenticación, "
                                 + "copie el token y péguelo en Authorize."))
                 .components(new Components()
                         .addSecuritySchemes(ESQUEMA_SEGURIDAD, new SecurityScheme()

@@ -62,6 +62,7 @@ Las decisiones de arquitectura y sus razones están en `docs/adr/`. No reviertas
 
 ## Código
 
+- Todo mensaje para personas (excepciones, respuestas, prompts) tutea: "Intenta de nuevo", nunca "Intente" (SPEC R41).
 - Clases, métodos y variables en español.
 - Sin Lombok: getters y setters explícitos.
 - Validación de entrada con Jakarta Validation en los DTO de request.
