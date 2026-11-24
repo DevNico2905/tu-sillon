@@ -208,7 +208,7 @@ COMPLETADA, CANCELADA y NO_ASISTIO son finales. Cualquier otra transición: 409.
   | GET /api/publico/** | 120 por minuto | — |
 
   El slug se compara en minúsculas para el límite por salón. La IP la resuelve el servidor recorriendo `X-Forwarded-For` desde el proxy de confianza; nunca se toma el valor que envía el cliente.
-- **R39 Orígenes del navegador.** Solo los orígenes de `CORS_ORIGENES` (exactos, sin comodines, `https://` salvo `localhost`) pueden llamar a la API desde un navegador. Para que la cookie de sesión funcione, el frontend y la API deben compartir sitio (por ejemplo `app.dominio.com` y `api.dominio.com`).
+- **R39 Orígenes del navegador.** Solo los orígenes de `CORS_ORIGENES` (exactos, sin comodines, `https://` salvo `localhost`) pueden llamar a la API desde un navegador. Para que la cookie de sesión funcione, el frontend y la API deben compartir sitio (por ejemplo `app.dominio.com` y `api.dominio.com`). La API expone la cabecera `Retry-After` por CORS, para que el front pueda leerla en un 429 (R38).
 
 ### 8.9 Cualquier estilista
 
