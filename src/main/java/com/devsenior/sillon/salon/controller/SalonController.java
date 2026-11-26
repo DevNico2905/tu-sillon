@@ -3,6 +3,7 @@ package com.devsenior.sillon.salon.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.devsenior.sillon.salon.dto.ConfiguracionRequest;
+import com.devsenior.sillon.salon.dto.DatosSalonRequest;
 import com.devsenior.sillon.salon.dto.SalonResponse;
 import com.devsenior.sillon.salon.service.SalonService;
 import com.devsenior.sillon.seguridad.model.UsuarioPrincipal;
@@ -29,6 +30,12 @@ public class SalonController {
     @GetMapping
     public SalonResponse miSalon(@AuthenticationPrincipal UsuarioPrincipal usuario) {
         return salonService.obtener(usuario.getSalonId());
+    }
+
+    @PutMapping
+    public SalonResponse actualizarDatos(@AuthenticationPrincipal UsuarioPrincipal usuario,
+                                         @Valid @RequestBody DatosSalonRequest request) {
+        return salonService.actualizarDatos(usuario.getSalonId(), request);
     }
 
     @PutMapping("/configuracion")

@@ -235,6 +235,10 @@ COMPLETADA, CANCELADA y NO_ASISTIO son finales. Cualquier otra transición: 409.
 
   Una estilista inactiva no sale en el catálogo público, no recibe citas y no puede iniciar sesión ni refrescar su sesión. Al desactivarla o cambiarle la contraseña se cierran todas sus sesiones; el access token que ya tenga vence en máximo 15 minutos.
 
+### 8.13 Datos del salón
+
+- **R44 Editar los datos del salón.** El dueño corrige nombre, ciudad, dirección y teléfono, con los mismos límites del registro y sin espacios sobrantes. El slug no cambia nunca, aunque cambie el nombre: es la dirección pública que el salón ya compartió. El catálogo público muestra los datos nuevos en la siguiente consulta.
+
 ---
 
 ## 9. Contrato de la API
@@ -275,6 +279,7 @@ En validación, `mensaje` lista los campos que fallaron con su mensaje, separado
 | Método y ruta | Recibe | Responde |
 |---|---|---|
 | GET /api/salon | — | 200: id, nombre, slug, ciudad, direccion, telefono, plan, creditosIa, configuracion {horaApertura, horaCierre, abreDomingos, intervaloMinutos}, fechaCreacion |
+| PUT /api/salon | nombre (máx. 100), ciudad (máx. 60), direccion (máx. 150), telefono (máx. 30), todos obligatorios (R44) | 200 salón actualizado · 400 |
 | PUT /api/salon/configuracion | horaApertura, horaCierre, abreDomingos, intervaloMinutos (15 a 60), todos obligatorios | 200 salón actualizado · 400 · 409 |
 
 ### Servicios · `/api/servicios`
