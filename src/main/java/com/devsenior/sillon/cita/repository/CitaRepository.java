@@ -33,4 +33,8 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
     /** Cuántas citas que ocupan agenda tiene el estilista en [desde, hasta): sirve para repartir la carga. */
     long countByEstilistaIdAndEstadoInAndInicioGreaterThanEqualAndInicioLessThan(
             Long estilistaId, Collection<EstadoCita> estados, LocalDateTime desde, LocalDateTime hasta);
+
+    /** Citas del estilista que ocupan agenda y todavía no terminan: impiden desactivarlo (R43). */
+    long countByEstilistaIdAndEstadoInAndFinGreaterThan(
+            Long estilistaId, Collection<EstadoCita> estados, LocalDateTime ahora);
 }

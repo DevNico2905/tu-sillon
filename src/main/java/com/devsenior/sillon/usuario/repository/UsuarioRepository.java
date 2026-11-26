@@ -12,7 +12,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     boolean existsByEmail(String email);
 
-    long countBySalonIdAndRol(Long salonId, Rol rol);
+    /** Cuenta solo los activos: un estilista desactivado no ocupa cupo del plan (R43). */
+    long countBySalonIdAndRolAndActivoTrue(Long salonId, Rol rol);
 
     List<Usuario> findBySalonIdAndRolOrderByNombreAsc(Long salonId, Rol rol);
 

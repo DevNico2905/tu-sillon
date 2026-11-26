@@ -97,6 +97,12 @@ public class SesionService {
                 .ifPresent(sesion -> repositorio.revocarFamilia(sesion.getFamilia(), clock.instant()));
     }
 
+    /** Cierra todas las sesiones del usuario en todos sus dispositivos (R43). */
+    @Transactional
+    public void revocarTodas(Long usuarioId) {
+        repositorio.revocarDelUsuario(usuarioId, clock.instant());
+    }
+
     /** Todos los días a las 3:30 a. m. (Colombia) borra las sesiones vencidas hace más de 7 días. */
     @Scheduled(cron = "0 30 3 * * *", zone = "America/Bogota")
     @Transactional
