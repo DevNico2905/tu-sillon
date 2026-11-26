@@ -3,6 +3,7 @@ package com.devsenior.sillon.salon.service;
 import com.devsenior.sillon.compartido.excepcion.RecursoNoEncontradoException;
 import com.devsenior.sillon.compartido.excepcion.ReglaNegocioException;
 import com.devsenior.sillon.salon.dto.ConfiguracionRequest;
+import com.devsenior.sillon.salon.dto.DatosSalonRequest;
 import com.devsenior.sillon.salon.dto.SalonResponse;
 import com.devsenior.sillon.salon.mapper.SalonMapper;
 import com.devsenior.sillon.salon.model.ConfiguracionSalon;
@@ -27,6 +28,17 @@ public class SalonService {
     @Transactional(readOnly = true)
     public SalonResponse obtener(Long salonId) {
         return salonMapper.toResponse(obtenerEntidad(salonId));
+    }
+
+    /** Nombre, ciudad, dirección y teléfono (R44). El slug no cambia. */
+    @Transactional
+    public SalonResponse actualizarDatos(Long salonId, DatosSalonRequest request) {
+        Salon salon = obtenerEntidad(salonId);
+        salon.setNombre(request.nombre().trim());
+        salon.setCiudad(request.ciudad().trim());
+        salon.setDireccion(request.direccion().trim());
+        salon.setTelefono(request.telefono().trim());
+        return salonMapper.toResponse(salonRepository.save(salon));
     }
 
     @Transactional
