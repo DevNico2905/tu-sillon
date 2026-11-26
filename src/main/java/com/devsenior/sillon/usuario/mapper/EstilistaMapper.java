@@ -11,6 +11,7 @@ public class EstilistaMapper {
     public EstilistaResponse toResponse(Usuario estilista) {
         return new EstilistaResponse(estilista.getId(), estilista.getNombre(), estilista.getEmail(),
                 estilista.isActivo(),
-                estilista.getServicios().stream().map(Servicio::getNombre).sorted().toList());
+                estilista.getServicios().stream().map(Servicio::getNombre).sorted().toList(),
+                estilista.getServicios().stream().map(Servicio::getId).sorted().toList());
     }
 }

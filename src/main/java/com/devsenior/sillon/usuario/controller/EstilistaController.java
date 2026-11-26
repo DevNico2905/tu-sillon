@@ -3,6 +3,7 @@ package com.devsenior.sillon.usuario.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.devsenior.sillon.seguridad.model.UsuarioPrincipal;
+import com.devsenior.sillon.usuario.dto.EstilistaActualizacionRequest;
 import com.devsenior.sillon.usuario.dto.EstilistaRequest;
 import com.devsenior.sillon.usuario.dto.EstilistaResponse;
 import com.devsenior.sillon.usuario.service.EstilistaService;
@@ -11,7 +12,9 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -39,5 +42,12 @@ public class EstilistaController {
     @GetMapping
     public List<EstilistaResponse> listar(@AuthenticationPrincipal UsuarioPrincipal usuario) {
         return estilistaService.listar(usuario.getSalonId());
+    }
+
+    @PutMapping("/{id}")
+    public EstilistaResponse actualizar(@AuthenticationPrincipal UsuarioPrincipal usuario,
+                                        @PathVariable Long id,
+                                        @Valid @RequestBody EstilistaActualizacionRequest request) {
+        return estilistaService.actualizar(usuario.getSalonId(), id, request);
     }
 }

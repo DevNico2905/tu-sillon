@@ -26,6 +26,12 @@ public interface SesionRefrescoRepository extends JpaRepository<SesionRefresco, 
             + "where s.familia = :familia and s.revocadoEn is null")
     int revocarFamilia(@Param("familia") String familia, @Param("ahora") Instant ahora);
 
+    /** Cierra todas las sesiones del usuario: al cambiarle la contraseña o desactivarlo (R43). */
+    @Modifying
+    @Query("update SesionRefresco s set s.revocadoEn = :ahora "
+            + "where s.usuario.id = :usuarioId and s.revocadoEn is null")
+    int revocarDelUsuario(@Param("usuarioId") Long usuarioId, @Param("ahora") Instant ahora);
+
     @Modifying
     @Query("delete from SesionRefresco s where s.expiraAbsoluto < :limite")
     int borrarVencidas(@Param("limite") Instant limite);

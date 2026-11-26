@@ -8,10 +8,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). C
 - **B11 · `Retry-After` visible para el front:** CORS expone la cabecera, que el navegador ocultaba en las respuestas a otro origen. Sin ella, el front no podía mostrar la cuenta regresiva de un 429.
 
 ### Agregado
+- **B12 · Editar y desactivar estilistas (R43):** `PUT /api/estilistas/{id}` cambia nombre, servicios, estado y, si viene, la contraseña. No se puede desactivar a quien tiene citas pendientes o confirmadas por terminar (409). Desactivar o cambiar la contraseña cierra todas sus sesiones. La respuesta de estilistas agrega `servicioIds`.
 - **B7 · Cualquier estilista (R40):** `estilistaId` opcional en la disponibilidad y al agendar. Sin él, la disponibilidad une las horas de todos los estilistas que ofrecen el servicio y la reserva asigna al libre con menos citas ese día.
 - **B9 · Horario en el catálogo público (R42):** `GET /api/publico/salones/{slug}` agrega `horaApertura`, `horaCierre` y `abreDomingos`, para que la web bloquee días y horas cerradas sin interpretar el texto.
 
 ### Cambiado
+- **B12 · Cupo del plan GRATIS (R9):** cuenta solo estilistas activos, así que desactivar a uno libera su cupo.
 - **B8 · Tono de tú (R41):** mensajes de error, de pago y el mensaje seguro del chatbot pasan a tú; los prompts del chatbot y del recordatorio piden tutear.
 
 ### Documentación

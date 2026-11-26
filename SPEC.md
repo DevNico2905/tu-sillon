@@ -68,7 +68,7 @@ Que cualquier salón se registre, configure horario, servicios y equipo, y desde
 
 | Producto | Pago en Stripe | Efecto |
 |---|---|---|
-| GRATIS | Ninguno (al registrarse) | Máximo 2 estilistas y 10 créditos de IA |
+| GRATIS | Ninguno (al registrarse) | Máximo 2 estilistas activos y 10 créditos de IA |
 | PRO | Suscripción mensual (15 USD) | Estilistas sin límite y +300 créditos al activarse |
 | Paquete de créditos | Pago único (5 USD) | +200 créditos |
 
@@ -118,7 +118,7 @@ Un crédito = una respuesta de la IA. Existen porque cada respuesta cuesta token
 
 - **R7 Servicio.** Dura entre 15 y 480 minutos y cuesta un entero de pesos mayor que cero (400 si no). `activo` es opcional y por defecto true.
 - **R8 Estilista.** Ofrece uno o más servicios de su mismo salón. Un servicio de otro salón: 404. La respuesta nunca incluye la contraseña.
-- **R9 Límite del plan.** En GRATIS, crear el tercer estilista responde 402. En PRO no hay límite.
+- **R9 Límite del plan.** En GRATIS, crear o reactivar el tercer estilista activo responde 402. Los desactivados no cuentan. En PRO no hay límite.
 - **R10 Orden de validación al crear un estilista** (decisión propia):
   1. Validación del cuerpo (400), antes de entrar al servicio.
   2. Límite del plan (402): va primero porque no depende de los datos enviados; si el salón no puede crear más estilistas, revisar el correo o los servicios no tiene sentido y además evitaría revelar si un correo existe.
@@ -224,6 +224,17 @@ COMPLETADA, CANCELADA y NO_ASISTIO son finales. Cualquier otra transición: 409.
 
 - **R42 Horario en datos.** El catálogo público trae el horario dos veces: `horario`, el texto para mostrar, y `horaApertura`, `horaCierre` y `abreDomingos`, los mismos datos para que el front arme el calendario sin interpretar el texto. Salen de la misma configuración del salón, así que nunca se contradicen. Son los valores que usa R14 para rechazar citas.
 
+### 8.12 Edición de estilistas
+
+- **R43 Editar y desactivar.** El dueño edita nombre, servicios y estado (`activo`), y puede asignar una contraseña nueva si la estilista la olvidó. El correo no cambia porque es con lo que inicia sesión. Nada se borra: desactivar conserva su historial de citas. Orden de validación:
+  1. Validación del cuerpo (400).
+  2. La estilista existe en el salón (404).
+  3. Reactivarla respeta el cupo del plan (402, R9).
+  4. Desactivarla exige que no tenga citas pendientes ni confirmadas que no hayan terminado (409, con cuántas tiene). Primero se cancelan.
+  5. Todos los servicioIds son del salón (404).
+
+  Una estilista inactiva no sale en el catálogo público, no recibe citas y no puede iniciar sesión ni refrescar su sesión. Al desactivarla o cambiarle la contraseña se cierran todas sus sesiones; el access token que ya tenga vence en máximo 15 minutos.
+
 ---
 
 ## 9. Contrato de la API
@@ -278,8 +289,9 @@ En validación, `mensaje` lista los campos que fallaron con su mensaje, separado
 
 | Método y ruta | Recibe | Responde |
 |---|---|---|
-| POST /api/estilistas | nombre, email, password (8 a 72), servicioIds (al menos uno) | 201: id, nombre, email, activo, servicios (nombres) · 400 · 402 · 404 · 409 |
-| GET /api/estilistas | — | 200 lista del salón |
+| POST /api/estilistas | nombre, email, password (8 a 72), servicioIds (al menos uno) | 201: id, nombre, email, activo, servicios (nombres), servicioIds · 400 · 402 · 404 · 409 |
+| GET /api/estilistas | — | 200 lista del salón, activos e inactivos |
+| PUT /api/estilistas/{id} | nombre, servicioIds (al menos uno), activo, password (opcional, 8 a 72) | 200 estilista · 400 · 402 · 404 · 409 (R43) |
 | GET /api/clientes | — | 200: id, nombre, telefono |
 
 ### Agenda · `/api/citas`
